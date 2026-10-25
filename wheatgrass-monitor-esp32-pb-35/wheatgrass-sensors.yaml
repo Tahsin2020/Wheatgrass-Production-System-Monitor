@@ -1,0 +1,75 @@
+esphome:
+  name: wheatgrass-sensors
+  friendly_name: wheatgrass sensors
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+logger:
+api:
+  encryption:
+    key: !secret api_key
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Wheatgrass-Sensors"
+    password: !secret ap_password
+
+captive_portal:
+
+# ---- I2C buses ----
+i2c:
+  - id: bus_a
+    sda: 21
+    scl: 22
+    scan: true
+
+sensor:
+  # ---- BME280 #1 on SDA21 / SCL22 ----
+  - platform: bme280_i2c
+    i2c_id: bus_a
+    address: 0x76
+    update_interval: 5s
+    iir_filter: 4x
+
+    temperature:
+      name: "BME280 Temperature"
+      oversampling: 16x
+
+    humidity:
+      name: "BME280 Humidity"
+      oversampling: 16x
+
+    pressure:
+      name: "BME280 Pressure"
+      oversampling: 16x
+
+  # ---- TSL2591 on same bus as BME280 #1 ----
+  - platform: tsl2591
+    i2c_id: bus_a
+    address: 0x29
+    update_interval: 1s
+    gain: AUTO
+    integration_time: 100ms
+
+    calculated_lux:
+      name: "Light"
+
+  # ---- Water Flow Sensor YF-S201 on GPIO32 ----
+  - platform: pulse_counter
+    pin:
+      number: GPIO32
+      mode: INPUT_PULLUP
+    name: "Water Flow Rate"
+    update_interval: 1s
+    unit_of_measurement: "L/min"
+    accuracy_decimals: 3
+    filters:
+      - multiply: 0.00225

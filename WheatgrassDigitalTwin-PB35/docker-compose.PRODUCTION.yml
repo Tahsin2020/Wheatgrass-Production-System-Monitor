@@ -1,0 +1,65 @@
+# docker-compose.PRODUCTION.yml
+# For PRODUCTION
+
+services:
+  # PostgreSQL Database Service
+  database:
+    image: postgres:15-alpine
+    container_name: wheatgrass_database
+    environment:
+      POSTGRES_DB: wheatgrass_monitor
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Backend Service
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    image: wheatgrass-backend:v1.0.0
+    container_name: wheatgrass_backend
+    env_file:
+      - ./Backend/.env
+    ports:
+      - "3001:3001"
+    depends_on:
+      - database
+    restart: unless-stopped
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    image: wheatgrass-frontend:v1.0.0
+    container_name: wheatgrass_frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Keycloak Authentication Service
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak-local
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    command: start-dev
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  keycloak_data:

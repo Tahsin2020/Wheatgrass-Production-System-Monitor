@@ -1,0 +1,20 @@
+name: ESPHome CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  esphome-build-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build ESPHome configuration
+        uses: esphome/build-action@main
+        with:
+          yaml-file: wheatgrass-sensors.yaml
+          version: latest
